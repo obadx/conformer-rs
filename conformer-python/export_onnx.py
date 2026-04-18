@@ -16,6 +16,7 @@ x = torch.randn(1, 50, 144)
 
 output_path = "../conformer-rs/model.onnx"
 
+print("Exporting to ONNX...")
 torch.onnx.export(
     model,
     x,
@@ -27,6 +28,7 @@ torch.onnx.export(
 
 print(f"Exported to {output_path}")
 
+print("Simplifying ONNX (embedding weights)...")
 from onnxsim import simplify
 import onnx
 
@@ -35,6 +37,16 @@ m_simp, check = simplify(m)
 onnx.save(m_simp, output_path)
 print(f"Simplified (check passed: {check})")
 
+print("Converting to NNEF for fast mobile loading...")
+import subprocess
+subprocess.run([
+    "tract", "model.onnx", "dump", "--nnef-dir", "model.nnef.d"
+], check=True)
+print("NNEF created: model.nnef.d/")
+
 with torch.no_grad():
     out = model(x)
     print(f"PyTorch output shape: {out.shape}")
+    print("\nDone! Files created:")
+    print("  - model.onnx  (50MB, single file, slow load ~30s)")
+    print("  - model.nnef.d/  (50MB, 25 files, fast load ~0.3s)")

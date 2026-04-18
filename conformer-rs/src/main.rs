@@ -1,23 +1,23 @@
-use std::path::PathBuf;
-use tract_ndarray::Array3;
-use tract_onnx::prelude::*;
+use ndarray::Array3;
+use tract_nnef::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let model_path = std::env::args_os()
         .nth(1)
-        .map(PathBuf::from)
+        .map(std::path::PathBuf::from)
         .unwrap_or_else(|| {
             let exe_path = std::env::current_exe().unwrap();
-            exe_path.parent().unwrap().join("model.onnx")
+            exe_path.parent().unwrap().join("model.nnef")
         });
 
     println!("Using model: {:?}", model_path);
 
-    let model = tract_onnx::onnx()
+    let model = tract_nnef::nnef()
         .model_for_path(&model_path)?
+        .into_optimized()?
         .into_runnable()?;
 
-    println!("Model loaded sucessfully!");
+    println!("Model loaded");
 
     let input: Array3<f32> = Array3::zeros((1, 50, 144));
     let input: Tensor = input.into();

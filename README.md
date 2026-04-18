@@ -98,7 +98,22 @@ source .venv/bin/activate
 python export_onnx.py
 ```
 
-This creates `conformer-rs/model.onnx`.
+This creates `conformer-rs/model.onnx` (~50MB with embedded weights).
+
+## NNEF Conversion (Recommended for Mobile)
+
+Convert ONNX to NNEF format for ~100x faster model loading on mobile:
+
+```bash
+cd conformer-rs
+tract model.onnx dump --nnef-dir model.nnef.d
+```
+
+This creates `model.nnef.d/` directory (~50MB, 25 files).
+
+**Why NNEF?**
+- ONNX loading: ~30 seconds (parses & optimizes every run)
+- NNEF loading: ~0.3 seconds (pre-optimized)
 
 ## Rust Inference
 
@@ -106,10 +121,21 @@ Run locally:
 
 ```bash
 cd conformer-rs
+
+# Copy model to release directory (for NNEF)
+cp -r model.nnef.d target/release/model.nnef
+
+# Run
 cargo run --release
 ```
 
-Output: `Output shape: [1, 50, 144]`
+Output:
+```
+Using model: "/path/to/model.nnef"
+Output shape: [1, 50, 144]
+
+real    0m0.2xxs
+```
 
 ## Android Build
 
@@ -120,38 +146,41 @@ cd conformer-rs
 cargo ndk -t arm64-v8a build --release
 ```
 
-Binary: `target/aarch64-linux-android/release/conformer-rs`
+**Output files:**
+- Binary: `target/aarch64-linux-android/release/conformer-rs` (~16MB)
+- Model: `target/aarch64-linux-android/release/model.nnef/` (~50MB, 25 files)
 
 ## Run on Android Phone
 
-### Files Needed (2 files only)
+### Files Needed
 
 ```
 /data/local/tmp/
-├── conformer-rs    # Binary (~18MB, self-contained)
-└── model.onnx      # ONNX model (~1.7MB)
+├── conformer-rs    # Binary (~16MB)
+└── model.nnef/     # NNEF model directory (~50MB, 25 files)
 ```
 
 ### Copy to Phone
 
 ```bash
-# Using adb
 adb push conformer-rs/target/aarch64-linux-android/release/conformer-rs /data/local/tmp/
-adb push conformer-rs/model.onnx /data/local/tmp/
+adb push conformer-rs/target/aarch64-linux-android/release/model.nnef/ /data/local/tmp/
 adb shell chmod +x /data/local/tmp/conformer-rs
 ```
 
 ### Run
 
 ```bash
-# Using adb
 adb shell /data/local/tmp/conformer-rs
-
-# Using SSH (if model.onnx is also on phone)
-ssh <phone-ip> "/data/local/tmp/conformer-rs"
 ```
 
-Expected output: `Output shape: [1, 50, 144]`
+Expected output:
+```
+Using model: "/data/local/tmp/model.nnef"
+Output shape: [1, 50, 144]
+
+real    0m0.2xxs
+```
 
 ## Todo
 
