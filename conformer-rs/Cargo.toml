@@ -1,0 +1,8 @@
+[package]
+name = "conformer-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tract-onnx = "0.22"
+ndarray = "0.16"
