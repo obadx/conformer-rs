@@ -77,6 +77,82 @@ x = torch.randn(1, 1024, 512)
 conformer(x) # (1, 1024, 512)
 ```
 
+## Model Configuration
+
+This project includes a pre-configured Conformer model for ASR:
+
+- **Depth**: 16 encoder layers
+- **Dim**: 144
+- **Heads**: 4
+- **Conv Kernel Size**: 32
+- **Input**: (batch, 50, 144) - 50 frames representing 2 seconds of speech
+- **Output**: (batch, 50, 144)
+
+## ONNX Export (Python)
+
+Export Conformer model to ONNX for Rust inference:
+
+```bash
+cd conformer-python
+source .venv/bin/activate
+python export_onnx.py
+```
+
+This creates `conformer-rs/model.onnx`.
+
+## Rust Inference
+
+Run locally:
+
+```bash
+cd conformer-rs
+cargo run --release
+```
+
+Output: `Output shape: [1, 50, 144]`
+
+## Android Build
+
+Cross-compile for Android (arm64):
+
+```bash
+cd conformer-rs
+cargo ndk -t arm64-v8a build --release
+```
+
+Binary: `target/aarch64-linux-android/release/conformer-rs`
+
+## Run on Android Phone
+
+### Files Needed (2 files only)
+
+```
+/data/local/tmp/
+├── conformer-rs    # Binary (~18MB, self-contained)
+└── model.onnx      # ONNX model (~1.7MB)
+```
+
+### Copy to Phone
+
+```bash
+# Using adb
+adb push conformer-rs/target/aarch64-linux-android/release/conformer-rs /data/local/tmp/
+adb push conformer-rs/model.onnx /data/local/tmp/
+adb shell chmod +x /data/local/tmp/conformer-rs
+```
+
+### Run
+
+```bash
+# Using adb
+adb shell /data/local/tmp/conformer-rs
+
+# Using SSH (if model.onnx is also on phone)
+ssh <phone-ip> "/data/local/tmp/conformer-rs"
+```
+
+Expected output: `Output shape: [1, 50, 144]`
+
 ## Todo
 
 - [ ] switch to a better relative positional encoding. shaw's is dated
