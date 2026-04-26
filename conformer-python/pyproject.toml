@@ -6,7 +6,11 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "einops>=0.8.2",
+    "onnx>=1.21.0",
+    "onnxruntime>=1.25.0",
+    "quran-transcript>=0.5.2",
     "torch>=2.11.0",
+    "transformers>=5.6.2",
 ]
 
 [build-system]
