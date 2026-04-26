@@ -1,3 +1,4 @@
+from transformers import AutoFeatureExtractor
 from conformer_python.muaalem_offline import (
     Wav2Vec2BertForMultilevelCTC,
     Wav2Vec2BertForMultilevelCTCConfig,
@@ -5,8 +6,10 @@ from conformer_python.muaalem_offline import (
 )
 
 if __name__ == "__main__":
+    model_id = "obadx/muaalem-model-v3_2"
+    procesor = AutoFeatureExtractor.from_pretrained(model_id)
     config = Wav2Vec2BertForMultilevelCTCConfig.from_pretrained(
-        "obadx/muaalem-model-v3_2",
+        model_id,
         pad_token_id=vocab.PAD_TOKEN_IDX,
         attention_dropout=0.0,
         hidden_dropout=0.0,
@@ -14,16 +17,27 @@ if __name__ == "__main__":
         mask_time_prob=0.0,
         layerdrop=0.0,
         ctc_loss_reduction="mean",
-        add_adapter=True,
+        add_adapter=False,
         num_hidden_layers=16,
         hidden_size=144,
         output_hidden_size=144,
         intermediate_size=256,
         num_attention_heads=4,
+        adapter_stride=1,
     )
     model = Wav2Vec2BertForMultilevelCTC.from_pretrained(
-        "obadx/muaalem-model-v3_2",
+        model_id,
         config=config,
         ignore_mismatched_sizes=True,
     )
     print(model)
+
+    sampling_rate = 16000
+    dummy_input = procesor(
+        sampling_rate * [0], sampling_rate=sampling_rate, return_tensors="pt"
+    )
+    print(dummy_input)
+    print(dummy_input["input_features"].shape)
+    model_out = model(**dummy_input, return_dict=True)[0]
+    print(model_out.keys())
+    print(model_out["phonemes"].shape)
