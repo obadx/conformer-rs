@@ -124,39 +124,32 @@ def export_float16(model, dummy_input, output_path):
 
 
 
-def export_int8(model, dummy_input, output_path):
-    print("\n[3/3] Exporting int8 with PyTorch dynamic quantization...")
+def export_int8(model, dummy_input, output_path, float32_model_path):
+    print("\n[3/3] Exporting int8 with onnxruntime quantization...")
+    print("  -> Strategy: Hybrid int8 (MatMul/Conv → int8, LayerNorm → fp32)")
     start = time.perf_counter()
 
     try:
-        wrapper = MultiLevelCTCWrapper(model)
-        wrapper.eval()
+        from onnxruntime.quantization import quantize_dynamic, QuantType
 
-        wrapper_quantized = torch.quantization.quantize_dynamic(
-            wrapper,
-            {nn.Linear},
-            dtype=torch.qint8,
-        )
-
-        torch.onnx.export(
-            wrapper_quantized,
-            (dummy_input["input_features"],),
-            str(output_path),
-            input_names=["input_features"],
-            output_names=wrapper.level_names,
-            dynamic_axes={"input_features": {1: "time"}},
-            opset_version=18,
-            do_constant_folding=True,
-            dynamo=False,
+        quantize_dynamic(
+            model_input=str(float32_model_path),
+            model_output=str(output_path),
+            weight_type=QuantType.QInt8,
+            op_types_to_quantize=["MatMul", "Conv"],
+            extra_options={
+                "MatMulConstBOnly": True,
+            },
         )
 
         elapsed = time.perf_counter() - start
         print(f"  -> Saved to {output_path}")
         print(f"  -> Time: {elapsed:.1f}s")
         return True
+
     except Exception as e:
         elapsed = time.perf_counter() - start
-        print(f"  -> int8 export failed: {type(e).__name__}")
+        print(f"  -> int8 export failed: {type(e).__name__}: {e}")
         print(f"  -> Falling back to float16...")
         return False
 
@@ -181,7 +174,7 @@ if __name__ == "__main__":
 
     export_float32(model, dummy_input, float32_path)
     export_float16(model, dummy_input, float16_path)
-    int8_success = export_int8(model, dummy_input, int8_path)
+    int8_success = export_int8(model, dummy_input, int8_path, float32_path)
 
     if not int8_success:
         import shutil
