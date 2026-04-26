@@ -44,8 +44,12 @@ def run_benchmark(model_path, precision):
     print(f"  Input: {input_name} {sess.get_inputs()[0].shape}")
     print(f"  Outputs: {output_names}")
 
-    # Prepare input
-    dtype = np.float16 if precision == "float16" else np.float32
+    # Prepare input - detect dtype from model
+    input_type = sess.get_inputs()[0].type
+    if "float16" in input_type.lower():
+        dtype = np.float16
+    else:
+        dtype = np.float32
     x = np.random.randn(*INPUT_SHAPE).astype(dtype)
 
     # Warmup

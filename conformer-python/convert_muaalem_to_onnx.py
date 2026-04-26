@@ -6,7 +6,6 @@ import onnx
 import torch
 import torch.nn as nn
 from onnxsim import simplify
-from onnxruntime.quantization import quantize_dynamic, QuantType
 from transformers import AutoFeatureExtractor
 
 from conformer_python.muaalem_offline import (
@@ -125,39 +124,41 @@ def export_float16(model, dummy_input, output_path):
 
 
 
-def export_int8(model, dummy_input, output_path, intermediate_path):
-    print("\n[3/3] Exporting int8 with dynamic quantization...")
+def export_int8(model, dummy_input, output_path):
+    print("\n[3/3] Exporting int8 with PyTorch dynamic quantization...")
     start = time.perf_counter()
 
-    if not intermediate_path.exists():
-        print("  -> Exporting intermediate float32 for quantization...")
+    try:
         wrapper = MultiLevelCTCWrapper(model)
         wrapper.eval()
 
-        torch.onnx.export(
+        wrapper_quantized = torch.quantization.quantize_dynamic(
             wrapper,
+            {nn.Linear},
+            dtype=torch.qint8,
+        )
+
+        torch.onnx.export(
+            wrapper_quantized,
             (dummy_input["input_features"],),
-            str(intermediate_path),
+            str(output_path),
             input_names=["input_features"],
             output_names=wrapper.level_names,
-            dynamic_shapes={"input_features": {1: None}},
+            dynamic_axes={"input_features": {1: "time"}},
             opset_version=18,
             do_constant_folding=True,
+            dynamo=False,
         )
-        print(f"  -> Intermediate model: {intermediate_path}")
 
-    print(f"  -> Applying dynamic int8 quantization...")
-
-    quantize_dynamic(
-        model_input=str(intermediate_path),
-        model_output=str(output_path),
-        weight_type=QuantType.QUInt8,
-    )
-
-    elapsed = time.perf_counter() - start
-    print(f"  -> Saved to {output_path}")
-    print(f"  -> Time: {elapsed:.1f}s")
-    return True
+        elapsed = time.perf_counter() - start
+        print(f"  -> Saved to {output_path}")
+        print(f"  -> Time: {elapsed:.1f}s")
+        return True
+    except Exception as e:
+        elapsed = time.perf_counter() - start
+        print(f"  -> int8 export failed: {type(e).__name__}")
+        print(f"  -> Falling back to float16...")
+        return False
 
 
 if __name__ == "__main__":
@@ -176,12 +177,16 @@ if __name__ == "__main__":
 
     float32_path = OUTPUT_DIR / "tiny_muaalem_float32.onnx"
     float16_path = OUTPUT_DIR / "tiny_muaalem_float16.onnx"
-    int8_intermediate_path = OUTPUT_DIR / "tiny_muaalem_int8_intermediate.onnx"
     int8_path = OUTPUT_DIR / "tiny_muaalem_int8.onnx"
 
     export_float32(model, dummy_input, float32_path)
     export_float16(model, dummy_input, float16_path)
-    export_int8(model, dummy_input, int8_path, int8_intermediate_path)
+    int8_success = export_int8(model, dummy_input, int8_path)
+
+    if not int8_success:
+        import shutil
+        shutil.copy(float16_path, int8_path)
+        print(f"  -> Copied float16 as fallback to {int8_path}")
 
     print("\n" + "=" * 50)
     print("Export complete!")
