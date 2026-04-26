@@ -2,13 +2,7 @@
 
 ## Conformer
 
-Implementation of the convolutional module from the <a href="https://arxiv.org/abs/2005.08100">Conformer</a> paper, for improving the local inductive bias in Transformers.
-
-## Install
-
-```bash
-$ pip install conformer
-```
+Implementation of the convolutional module from the [Conformer](https://arxiv.org/abs/2005.08100) paper, for improving the local inductive bias in Transformers.
 
 ## Usage
 
@@ -16,7 +10,7 @@ The Conformer convolutional module, the main novelty of the paper
 
 ```python
 import torch
-from conformer import ConformerConvModule
+from conformer_python import ConformerConvModule
 
 layer = ConformerConvModule(
     dim = 512,
@@ -49,7 +43,6 @@ block = ConformerBlock(
 )
 
 x = torch.randn(1, 1024, 512)
-
 block(x) # (1, 1024, 512)
 ```
 
@@ -73,13 +66,12 @@ conformer = Conformer(
 )
 
 x = torch.randn(1, 1024, 512)
-
 conformer(x) # (1, 1024, 512)
 ```
 
 ## Model Configuration
 
-This project includes a pre-configured Conformer model for ASR:
+This project includes a pre-configured Conformer model for ASR using ConformerBlock:
 
 - **Depth**: 16 encoder layers
 - **Dim**: 144
@@ -88,145 +80,42 @@ This project includes a pre-configured Conformer model for ASR:
 - **Input**: (batch, 50, 144) - 50 frames representing 2 seconds of speech
 - **Output**: (batch, 50, 144)
 
-## ONNX Export (Python)
-
-Export Conformer model to ONNX for Rust inference:
-
-```bash
-cd conformer-python
-source .venv/bin/activate
-python export_onnx.py
-```
-
-This creates `conformer-rs/model.onnx` (~50MB with embedded weights).
-
-## NNEF Conversion (Recommended for Mobile)
-
-Convert ONNX to NNEF format for ~100x faster model loading on mobile:
-
-```bash
-cd conformer-rs
-tract model.onnx dump --nnef-dir model.nnef.d
-```
-
-This creates `model.nnef.d/` directory (~50MB, 25 files).
-
-**Why NNEF?**
-- ONNX loading: ~30 seconds (parses & optimizes every run)
-- NNEF loading: ~0.3 seconds (pre-optimized)
-
-## Rust Inference
-
-Run locally:
-
-```bash
-cd conformer-rs
-
-# Copy model to release directory (for NNEF)
-cp -r model.nnef.d target/release/model.nnef
-
-# Run
-cargo run --release
-```
-
-Output:
-```
-Using model: "/path/to/model.nnef"
-Output shape: [1, 50, 144]
-
-real    0m0.2xxs
-```
-
-## Android Build
-
-Cross-compile for Android (arm64):
-
-```bash
-cd conformer-rs
-cargo ndk -t arm64-v8a build --release
-```
-
-**Output files:**
-- Binary: `target/aarch64-linux-android/release/conformer-rs` (~16MB)
-- Model: `target/aarch64-linux-android/release/model.nnef/` (~50MB, 25 files)
-
-## Run on Android Phone
-
-### Files Needed
-
-```
-/data/local/tmp/
-├── conformer-rs    # Binary (~16MB)
-└── model.nnef/     # NNEF model directory (~50MB, 25 files)
-```
-
-### Copy to Phone
-
-```bash
-adb push conformer-rs/target/aarch64-linux-android/release/conformer-rs /data/local/tmp/
-adb push conformer-rs/target/aarch64-linux-android/release/model.nnef/ /data/local/tmp/
-adb shell chmod +x /data/local/tmp/conformer-rs
-```
-
-### Run
-
-```bash
-adb shell /data/local/tmp/conformer-rs
-```
-
-Expected output:
-```
-Using model: "/data/local/tmp/model.nnef"
-Output shape: [1, 50, 144]
-
-real    0m0.2xxs
-```
-
-## Todo
-
-- [ ] switch to a better relative positional encoding. shaw's is dated
-- [ ] flash attention with a better RPE
-
 ---
 
-# Muaalem ONNX Export & Benchmark
+# Muaalem: Tiny Arabic ASR Model
 
-This section documents the Muaalem model export to ONNX and benchmark results.
+Muaalem uses ConformerBlock as the building block for its encoder. This section documents exporting to ONNX and benchmarking.
 
-## Project Structure
+## Model Architecture
 
-```
-conformer-rs/
-├── models/                          # ONNX model files
-│   ├── tiny_muaalem_float32.onnx
-│   ├── tiny_muaalem_float16.onnx
-│   └── tiny_muaalem_int8.onnx
-├── conformer-python/                 # Python export & benchmark
-│   ├── convert_muaalem_to_onnx.py
-│   └── run_muaalem_onnx.py
-├── conformer-rs/                   # Rust benchmark (CLI)
-│   ├── src/main.rs
-│   └── README.md
-└── README.md                       # This file
-```
+- **Base Model**: Uses ConformerBlock as building block (16 layers)
+- **Parameters**: hidden_size=144, heads=4, conv_kernel=32
+- **Source**: `obadx/muaalem-model-v3_2` (HuggingFace)
+- **Input Shape**: (batch, 49, 160) - audio features (1 second)
+- **Output**: 11 levels (phonemes + 10 sifa attributes):
+  - phonemes (43 classes)
+  - hams_or_jahr, shidda_or_rakhawa, tafkheem_or_taqeeq, itbaq, safeer, qalqla, tikraar, tafashie, istitala, ghonna
 
-## Python Setup (conformer-python)
+## Step 1: Export ONNX Models
 
 ```bash
 cd conformer-python
 uv sync
-```
-
-## Export ONNX Models
-
-```bash
-cd conformer-python
 uv run python convert_muaalem_to_onnx.py
 ```
 
-## Run Python Benchmark (Linux)
+This creates 3 ONNX model files in `conformer-rs/models/`:
+
+| File | Size | Precision |
+|------|------|-----------|
+| `tiny_muaalem_float32.onnx` | 22 MB | Full float32 |
+| `tiny_muaalem_float16.onnx` | 11 MB | Half precision |
+| `tiny_muaalem_int8.onnx` | 8.1 MB | Quantized int8 |
+
+## Step 2: Benchmark (Python/Linux)
 
 ```bash
+cd conformer-python
 uv run python run_muaalem_onnx.py
 ```
 
@@ -238,22 +127,24 @@ uv run python run_muaalem_onnx.py
 | float16  | 57.3     | 10.12±0.89   | ✅ Works |
 | int8     | 38.6     | 25.89±0.17   | ✅ Works |
 
-## Rust Build & Run (Linux)
+## Step 3: Benchmark (Rust/Linux)
 
 ```bash
 cd conformer-rs
 cargo run --release -- --models ../models --iterations 50
 ```
 
-### Results (Linux x86_64)
+### Results (Linux x86_64, Rust/ort-tract)
 
 | Model    | Load (ms) | Inference (ms) | Notes |
 |----------|-----------|----------------|-------|
 | float32  | 216.9    | 10.29±0.18    | ✅ Works |
-| float16  | -        | -              | ❌ LayerNorm |
-| int8     | -        | -              | ❌ Quantization |
+| float16  | -        | -              | ❌ LayerNorm not supported |
+| int8     | -        | -              | ❌ Quantization not supported |
 
-## Rust Build for Android
+## Step 4: Android Build & Run
+
+### Build for Android ARM64
 
 ```bash
 cd conformer-rs
@@ -262,10 +153,10 @@ cargo ndk -t arm64-v8a build --release
 
 Output: `target/aarch64-linux-android/release/conformer-rs` (19 MB)
 
-## Run Rust Benchmark on Android
+### Run on Android Device
 
 ```bash
-# Push binary and models
+# Push binary and model
 adb push target/aarch64-linux-android/release/conformer-rs /data/local/
 adb push models/tiny_muaalem_float32.onnx /data/local/
 
@@ -278,17 +169,17 @@ adb shell /data/local/conformer-rs --models /data/local --iterations 50
 | Model    | Load (ms)  | Inference (ms)      | Notes |
 |----------|------------|---------------------|-------|
 | float32  | 2013.0    | 90.17±88.46        | ✅ Works |
-| float16  | -         | -                   | ❌ LayerNorm |
-| int8     | -         | -                   | ❌ Quantization |
+| float16  | -         | -                   | ❌ LayerNorm not supported |
+| int8     | -         | -                   | ❌ Quantization not supported |
 
 ## CLI Options (Rust)
 
 ```bash
 conformer-rs --models <path>     # Model directory (default: models)
 conformer-rs -n <N>              # Iterations (default: 10)
-conformer-rs -w <N>               # Warmup iterations (default: 2)
-conformer-rs --shape B,T,F        # Input shape (default: 1,49,160)
-conformer-rs --help               # Show help
+conformer-rs -w <N>             # Warmup iterations (default: 2)
+conformer-rs --shape B,T,F      # Input shape (default: 1,49,160)
+conformer-rs --help             # Show help
 ```
 
 ## Model Support Matrix
@@ -303,10 +194,21 @@ conformer-rs --help               # Show help
 
 ### Rust/Tract Errors
 
-- **"Failed to parse model: Translating node LayerNorm"** - LayerNorm not supported by tract
-- **"Failed to parse model: Failed analyse for node ConvHir"** - Quantization not supported
+- **"Failed to parse model: Translating node LayerNorm"** - LayerNorm not supported by tract backend
+- **"Failed to parse model: Failed analyse for node ConvHir"** - Quantization (QDQ) not supported
 
-Use float32 model only for Rust/Android.
+Solution: Use float32 model only for Rust/Android benchmarks.
+
+### Why Not ONNX Runtime for Android?
+
+The `ort` crate includes ONNX Runtime source code that uses glibc functions which don't exist on Android (Bionic libc). Building from source takes ~1 hour. Using tract backend avoids this but loses float16/int8 support.
+
+---
+
+## Todo
+
+- [ ] switch to a better relative positional encoding. shaw's is dated
+- [ ] flash attention with a better RPE
 
 ## Citations
 
