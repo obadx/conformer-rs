@@ -83,6 +83,7 @@ dependencies = [
     { name = "einops" },
     { name = "onnx" },
     { name = "onnxruntime" },
+    { name = "onnxsim" },
     { name = "quran-transcript" },
     { name = "torch" },
     { name = "transformers" },
@@ -93,6 +94,7 @@ requires-dist = [
     { name = "einops", specifier = ">=0.8.2" },
     { name = "onnx", specifier = ">=1.21.0" },
     { name = "onnxruntime", specifier = ">=1.25.0" },
+    { name = "onnxsim", specifier = ">=0.6.2" },
     { name = "quran-transcript", specifier = ">=0.5.2" },
     { name = "torch", specifier = ">=2.11.0" },
     { name = "transformers", specifier = ">=5.6.2" },
@@ -653,6 +655,22 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/18/29/b1d5b91d04ae80768ed8e38639ab2fcc92750a67fddc30ad6b700f244113/onnxruntime-1.25.0-cp314-cp314-win_arm64.whl", hash = "sha256:2bed9b35568b3ecf8ab34dc832d37216e47947e86508a0fd6b75e4c19d7ba907", size = 12933438, upload-time = "2026-04-22T17:20:17.223Z" },
     { url = "https://files.pythonhosted.org/packages/56/f4/cfd47f88da545ea57c1f2a4b5886d455ec64f53b723b1a448fc44ed757e9/onnxruntime-1.25.0-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:00548a16e8f0d52cb1c67ef50177e5e2be848ccffc6db60010ee37faaccbbb6f", size = 15853591, upload-time = "2026-04-22T17:19:42.325Z" },
     { url = "https://files.pythonhosted.org/packages/89/de/8b406be6ea4f2c254f9bc850cbe8038064c7768a94cdf7785420b3652ea7/onnxruntime-1.25.0-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a071a0740388e0ffad081c583761f37837b113bde3d03dc70790ed6cf4f4de0b", size = 17996166, upload-time = "2026-04-22T17:20:05.873Z" },
+]
+
+[[package]]
+name = "onnxsim"
+version = "0.6.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "onnx" },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/10/db/af9133c96186ef212637da4c941c0235c9ba8ed5bc9e5f526856a91be0e1/onnxsim-0.6.2.tar.gz", hash = "sha256:fd458ccbf449dd53d187daf6bf41b284c9d0774049b8517956375e705fdc334a", size = 2727720, upload-time = "2026-02-26T07:15:09.902Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4b/30/8b6ac5afe842cb4876899baec3139f8670d6721e3926b395b7397515987b/onnxsim-0.6.2-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:3a8ed4cae70fedcaa3fddc2d984a3dc89a88bf5be12649d1519a828103a50ade", size = 1860538, upload-time = "2026-02-26T07:15:03.663Z" },
+    { url = "https://files.pythonhosted.org/packages/17/eb/3eaf2d5ac419739c66043f5a1e6a283b4deebb1be26b12ee7a8f376c07f9/onnxsim-0.6.2-cp312-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f5576e685231e7c5443f1e8437d0e87e9d75c04ae30c99bd44e3e7039520d51e", size = 2613112, upload-time = "2026-02-26T07:15:04.931Z" },
+    { url = "https://files.pythonhosted.org/packages/32/f0/e0c47b0689501d7b6e4934743c89871f964eb3cbb4de5a80169c8bdaf759/onnxsim-0.6.2-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a9f47e33e24eaf0b242f3db93c99ab60709d4302f832a2a5b6230ca088c001cb", size = 2921419, upload-time = "2026-02-26T07:15:06.755Z" },
+    { url = "https://files.pythonhosted.org/packages/90/1f/ea45faff66c18186eee94b26b56de3ccae6b3959e35610d63d46752940f9/onnxsim-0.6.2-cp312-abi3-win_amd64.whl", hash = "sha256:5d48239ef14a211462f833b59f1d4afad24d0a2e4b08c02d2bd1ad37bb2d07db", size = 1633099, upload-time = "2026-02-26T07:15:08.274Z" },
 ]
 
 [[package]]
