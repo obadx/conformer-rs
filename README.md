@@ -187,6 +187,127 @@ real    0m0.2xxs
 - [ ] switch to a better relative positional encoding. shaw's is dated
 - [ ] flash attention with a better RPE
 
+---
+
+# Muaalem ONNX Export & Benchmark
+
+This section documents the Muaalem model export to ONNX and benchmark results.
+
+## Project Structure
+
+```
+conformer-rs/
+├── models/                          # ONNX model files
+│   ├── tiny_muaalem_float32.onnx
+│   ├── tiny_muaalem_float16.onnx
+│   └── tiny_muaalem_int8.onnx
+├── conformer-python/                 # Python export & benchmark
+│   ├── convert_muaalem_to_onnx.py
+│   └── run_muaalem_onnx.py
+├── conformer-rs/                   # Rust benchmark (CLI)
+│   ├── src/main.rs
+│   └── README.md
+└── README.md                       # This file
+```
+
+## Python Setup (conformer-python)
+
+```bash
+cd conformer-python
+uv sync
+```
+
+## Export ONNX Models
+
+```bash
+cd conformer-python
+uv run python convert_muaalem_to_onnx.py
+```
+
+## Run Python Benchmark (Linux)
+
+```bash
+uv run python run_muaalem_onnx.py
+```
+
+### Results (Linux x86_64, Python/onnxruntime)
+
+| Model    | Load (ms) | Inference (ms) | Notes |
+|----------|-----------|----------------|-------|
+| float32  | 43.9     | 8.73±0.37     | ✅ Works |
+| float16  | 57.3     | 10.12±0.89   | ✅ Works |
+| int8     | 38.6     | 25.89±0.17   | ✅ Works |
+
+## Rust Build & Run (Linux)
+
+```bash
+cd conformer-rs
+cargo run --release -- --models ../models --iterations 50
+```
+
+### Results (Linux x86_64)
+
+| Model    | Load (ms) | Inference (ms) | Notes |
+|----------|-----------|----------------|-------|
+| float32  | 216.9    | 10.29±0.18    | ✅ Works |
+| float16  | -        | -              | ❌ LayerNorm |
+| int8     | -        | -              | ❌ Quantization |
+
+## Rust Build for Android
+
+```bash
+cd conformer-rs
+cargo ndk -t arm64-v8a build --release
+```
+
+Output: `target/aarch64-linux-android/release/conformer-rs` (19 MB)
+
+## Run Rust Benchmark on Android
+
+```bash
+# Push binary and models
+adb push target/aarch64-linux-android/release/conformer-rs /data/local/
+adb push models/tiny_muaalem_float32.onnx /data/local/
+
+# Run benchmark
+adb shell /data/local/conformer-rs --models /data/local --iterations 50
+```
+
+### Results (Android - Redmi 9, MediaTek Helio G80)
+
+| Model    | Load (ms)  | Inference (ms)      | Notes |
+|----------|------------|---------------------|-------|
+| float32  | 2013.0    | 90.17±88.46        | ✅ Works |
+| float16  | -         | -                   | ❌ LayerNorm |
+| int8     | -         | -                   | ❌ Quantization |
+
+## CLI Options (Rust)
+
+```bash
+conformer-rs --models <path>     # Model directory (default: models)
+conformer-rs -n <N>              # Iterations (default: 10)
+conformer-rs -w <N>               # Warmup iterations (default: 2)
+conformer-rs --shape B,T,F        # Input shape (default: 1,49,160)
+conformer-rs --help               # Show help
+```
+
+## Model Support Matrix
+
+| Precision | Python/onnxruntime | Rust/ort-tract (Linux) | Android |
+|------------|-------------------|--------------------------|--------|
+| float32   | ✅ 8.73 ms      | ✅ 10.29 ms            | ✅ 90 ms |
+| float16   | ✅ 10.12 ms     | ❌ LayerNorm           | ❌ LayerNorm |
+| int8      | ✅ 25.89 ms     | ❌ Quantization       | ❌ Quantization |
+
+## Troubleshooting
+
+### Rust/Tract Errors
+
+- **"Failed to parse model: Translating node LayerNorm"** - LayerNorm not supported by tract
+- **"Failed to parse model: Failed analyse for node ConvHir"** - Quantization not supported
+
+Use float32 model only for Rust/Android.
+
 ## Citations
 
 ```bibtex
