@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ort-tract = "0.3.0"
-ort = { version = "2.0.0-rc.12", default-features = false, features = ["std", "ndarray", "alternative-backend"] }
+ort-tract = "0.3.0+0.22"
+
+ort = { version = "2.0.0-rc.12", default-features = false, features = ["std", "ndarray", "alternative-backend", "half"] }
 ndarray = "0.17"
 half = "2"
 clap = { version = "4", features = ["derive"] }

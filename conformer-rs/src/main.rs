@@ -38,10 +38,7 @@ struct BenchmarkResult {
 }
 
 fn parse_shape(s: &str) -> (usize, usize, usize) {
-    let parts: Vec<usize> = s
-        .split(',')
-        .map(|p| p.trim().parse().unwrap())
-        .collect();
+    let parts: Vec<usize> = s.split(',').map(|p| p.trim().parse().unwrap()).collect();
     if parts.len() != 3 {
         panic!("Invalid shape: expected format 'batch,time,features'");
     }
@@ -50,9 +47,12 @@ fn parse_shape(s: &str) -> (usize, usize, usize) {
 
 fn find_onnx_models(models_dir: &PathBuf) -> Vec<(String, PathBuf)> {
     let mut models = Vec::new();
-    
+
     if !models_dir.exists() {
-        eprintln!("Error: Models directory '{}' does not exist", models_dir.display());
+        eprintln!(
+            "Error: Models directory '{}' does not exist",
+            models_dir.display()
+        );
         return models;
     }
 
@@ -123,7 +123,11 @@ fn run_benchmark(
     let input_info = &session.inputs()[0];
     let input_name = input_info.name().to_string();
     let input_dtype = input_info.dtype();
-    let output_names: Vec<_> = session.outputs().iter().map(|o| o.name().to_string()).collect();
+    let output_names: Vec<_> = session
+        .outputs()
+        .iter()
+        .map(|o| o.name().to_string())
+        .collect();
 
     println!(
         "  Input: {} {:?}",
@@ -150,12 +154,8 @@ fn run_benchmark(
     }
 
     let avg_time_ms = times.iter().sum::<f64>() / times.len() as f64;
-    let std_ms = (times
-        .iter()
-        .map(|t| (t - avg_time_ms).powi(2))
-        .sum::<f64>()
-        / times.len() as f64)
-        .sqrt();
+    let std_ms =
+        (times.iter().map(|t| (t - avg_time_ms).powi(2)).sum::<f64>() / times.len() as f64).sqrt();
     let min_ms = times.iter().cloned().fold(f64::INFINITY, f64::min);
     let max_ms = times.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
 
@@ -226,3 +226,4 @@ fn main() -> ort::Result<()> {
 
     Ok(())
 }
+
