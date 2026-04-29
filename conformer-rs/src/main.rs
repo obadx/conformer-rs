@@ -2,7 +2,7 @@ use clap::Parser;
 use ndarray::Array3;
 use ort::{
     session::Session,
-    value::{DynValue, Tensor},
+    value::{DynValue, Tensor, TensorElementType, ValueType},
 };
 use ort_tract;
 use std::{path::PathBuf, time::Instant};
@@ -78,9 +78,30 @@ fn find_onnx_models(models_dir: &PathBuf) -> Vec<(String, PathBuf)> {
     models
 }
 
-fn create_input(shape: (usize, usize, usize)) -> DynValue {
-    let arr: Array3<f32> = Array3::from_elem(shape, 0.1);
-    Tensor::from_array(arr).unwrap().into_dyn()
+fn create_input(shape: (usize, usize, usize), dtype: &ValueType) -> DynValue {
+    let tensor_ty = match dtype {
+        ValueType::Tensor { ty, .. } => ty,
+        _ => panic!("Expected tensor input type"),
+    };
+    match tensor_ty {
+        TensorElementType::Float32 => {
+            let arr: Array3<f32> = Array3::from_elem(shape, 0.1);
+            Tensor::from_array(arr).unwrap().into_dyn()
+        }
+        TensorElementType::Float16 => {
+            let arr: Array3<half::f16> = Array3::from_elem(shape, half::f16::from_f32(0.1));
+            Tensor::from_array(arr).unwrap().into_dyn()
+        }
+        TensorElementType::Int64 => {
+            let arr: Array3<i64> = Array3::from_elem(shape, 0i64);
+            Tensor::from_array(arr).unwrap().into_dyn()
+        }
+        TensorElementType::Int32 => {
+            let arr: Array3<i32> = Array3::from_elem(shape, 0);
+            Tensor::from_array(arr).unwrap().into_dyn()
+        }
+        _ => panic!("Unsupported input dtype: {:?}", tensor_ty),
+    }
 }
 
 fn run_benchmark(
@@ -137,7 +158,7 @@ fn run_benchmark(
     println!("  Input dtype: {input_dtype:?}");
     println!("  Outputs: {output_names:?}");
 
-    let input_tensor = create_input(input_shape);
+    let input_tensor = create_input(input_shape, &input_dtype);
 
     for _ in 0..warmup {
         let _ = session.run(ort::inputs! { input_name.clone() => &input_tensor });
@@ -226,4 +247,3 @@ fn main() -> ort::Result<()> {
 
     Ok(())
 }
-
