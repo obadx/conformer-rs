@@ -168,9 +168,102 @@ adb shell /data/local/conformer-rs --models /data/local --iterations 50
 
 | Model    | Load (ms)  | Inference (ms)      | Notes |
 |----------|------------|---------------------|-------|
-| float32  | 2013.0    | 90.17±88.46        | ✅ Works |
+| float32  | 3090.6    | 79.51±18.91        | ✅ Works |
 | float16  | -         | -                   | ❌ LayerNorm not supported |
 | int8     | -         | -                   | ❌ Quantization not supported |
+
+### Results for tract (single core CPU)
+
+```bash
+~/muaalem $ ./conformer-rs --models ./models/ --iterations 1000
+==================================================
+Muaalem ONNX Benchmark (Rust/ort-tract)
+==================================================
+Models dir: ./models/
+Input shape: (1, 49, 160)
+Iterations: 1000 (warmup: 2)
+Found 3 model(s)
+
+========================================
+Precision: tiny_muaalem_float16
+========================================
+  Failed to load model: Failed to parse model: Translating node #3 "node_layer_norm" LayerNorm ToTypedTranslator
+
+========================================
+Precision: tiny_muaalem_float32
+========================================
+  Load time: 3090.6ms
+  Input: input_features Some([1, 49, 160])
+  Input dtype: Tensor { ty: Float32, shape: [1, 49, 160], dimension_symbols: SymbolicDimensions(["", "", ""]) }
+  Outputs: ["ghonna", "hams_or_jahr", "istitala", "itbaq", "phonemes", "qalqla", "safeer", "shidda_or_rakhawa", "tafashie", "tafkheem_or_taqeeq", "tikraar"]
+  Inference (ms): avg=79.51±18.91, min=71.40, max=452.33
+  Output count: 11
+
+========================================
+Precision: tiny_muaalem_int8
+========================================
+  Failed to load model: Failed to parse model: Failed analyse for node #458 "node_Conv_1490_quant" ConvHir
+
+==================================================
+Summary
+==================================================
+Model                Load (ms)    Inference (ms)  Std (ms)  
+--------------------------------------------------
+tiny_muaalem_float32       3090.6           79.51      18.91
+```
+
+### Results for ruten crate
+
+```bash
+ $ ./conformer-rten --models ./models/ --iterations 1000
+==================================================
+Muaalem ONNX Benchmark (Rust/rten)
+==================================================
+Models dir: ./models/
+Input shape: (1, 49, 160)
+Iterations: 1000 (warmup: 2)
+Found 3 model(s)
+
+========================================
+Precision: tiny_muaalem_float16
+========================================
+  Failed to load model: in node "model.wav2vec2_bert.feature_projection.layer_norm.weight": graph error: initializer has unsupported data type FLOAT16
+
+========================================
+Precision: tiny_muaalem_float32
+========================================
+  Load time: 185.0ms
+  Input: input_features Some([1, 49, 160])
+  Outputs: 11 outputs
+    - ghonna
+    - hams_or_jahr
+    - istitala
+    ... and 8 more
+  Inference (ms): avg=179.49±95.21, min=73.79, max=492.09
+  Output count: 11
+
+========================================
+Precision: tiny_muaalem_int8
+========================================
+  Load time: 111.5ms
+  Input: input_features Some([1, 49, 160])
+  Outputs: 11 outputs
+    - ghonna
+    - hams_or_jahr
+    - istitala
+    ... and 8 more
+  Inference (ms): avg=106.42±51.06, min=56.86, max=311.79
+  Output count: 11
+
+==================================================
+Summary
+==================================================
+Model                Load (ms)    Inference (ms)  Std (ms)  
+--------------------------------------------------
+tiny_muaalem_float32        185.0          179.49      95.21
+tiny_muaalem_int8           111.5          106.42      51.06
+
+```bash
 
 ## CLI Options (Rust)
 
