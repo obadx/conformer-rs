@@ -166,11 +166,12 @@ adb shell /data/local/conformer-rs --models /data/local --iterations 50
 
 ### Results (Android - Redmi 9, MediaTek Helio G80)
 
-| Model    | Load (ms)  | Inference (ms)      | Notes |
-|----------|------------|---------------------|-------|
-| float32  | 3090.6    | 79.51±18.91        | ✅ Works |
-| float16  | -         | -                   | ❌ LayerNorm not supported |
-| int8     | -         | -                   | ❌ Quantization not supported |
+| Model    | Window Length (seconds) |  Load (ms)  | Inference (ms)      | Notes |
+|----------|-------------------------|-------------|---------------------|-------|
+| float32  | 1                       | 3090.6    | 79.51±18.91        | ✅ Works |
+| float32  | 5.02                    | 4087.3    | 693.95±175.45      | ✅ Works |
+| float16  | | -         | -                   | ❌ LayerNorm not supported |
+| int8     | | -         | -                   | ❌ Quantization not supported |
 
 ### Results for tract (single core CPU)
 
@@ -300,8 +301,10 @@ The `ort` crate includes ONNX Runtime source code that uses glibc functions whic
 
 ## Todo
 
-- [ ] switch to a better relative positional encoding. shaw's is dated
-- [ ] flash attention with a better RPE
+- [ ] Implement Streaming conformer with KV caching and 5.02 seconds as input (250 frames)
+- [ ] Implement Streaming conformer with KV caching with sliding widnow attention and 5.02 seconds as input (250 frames)
+- [ ] Implement Streaming conformer LSTM Architecture [here](https://github.com/obadx/quran-muaalem/issues/10) and 5.02 seconds as input (250 frames)
+
 
 ## Citations
 
