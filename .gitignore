@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Generated model files
+*.tflite
+saved_model_tiny/
+qai_hub_results/
+models/
+models/*
+LiteRT
