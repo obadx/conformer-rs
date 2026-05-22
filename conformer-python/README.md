@@ -78,6 +78,25 @@ tiny_muaalem_int8_qnn.tflite   ← NPU-optimized model
 [parse_profile_results.py]     ← human-readable summary
 ```
 
+### Architecture Variants
+
+The conversion script supports two model architectures via the `--architecture` flag:
+
+| Flag | Model Class | Backbone | Weights | Input | hidden_size | intermediate_size | heads |
+|---|---|---|---|---|---|---|---|
+| `w2v-conformer` (default) | `Wav2Vec2BertForMultilevelCTC` | Wav2Vec2-BERT (Conformer) | From hub (`from_pretrained`) | `input_features` (log-mel) | 256 | 1024 | 4 |
+| `w2v` | `Wav2Vec2ForMultilevelCTC` | Wav2Vec2 (original Transformer) | Random init (from scratch) | `input_values` (raw waveform) | 384 | 1536 | 4 |
+
+```bash
+# Default (w2v-conformer): load pretrained from hub
+uv run python convert_tiny_to_tflite.py
+
+# Wav2Vec2: create from scratch with custom dimensions
+uv run python convert_tiny_to_tflite.py --architecture w2v
+```
+
+The `w2v` variant produces files prefixed `tiny_muaalem_w2v_*` (e.g. `tiny_muaalem_w2v_float32.tflite`) so they can coexist with conformer outputs.
+
 ## Learned Lessons
 
 ### Why we should use quantize to tflite from float32 not used prequantized version

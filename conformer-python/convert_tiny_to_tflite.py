@@ -4,7 +4,7 @@ Convert tiny Muaalem model to LiteRT (.tflite) format.
 Produces float32, int8, and int4 quantized versions.
 
 Usage:
-    python convert_tiny_to_tflite.py [--output-dir OUTPUT_DIR]
+    python convert_tiny_to_tflite.py [--architecture {w2v-conformer,w2v}] [--output-dir OUTPUT_DIR]
 """
 
 import argparse
@@ -13,20 +13,28 @@ import torch
 import litert_torch
 from transformers import AutoFeatureExtractor
 from ai_edge_quantizer import quantizer, recipe
-from conformer_python.muaalem_offline import (
-    Wav2Vec2BertForMultilevelCTC,
-    Wav2Vec2BertForMultilevelCTCConfig,
-    vocab,
-)
+from conformer_python.muaalem_offline import vocab
 
-MODEL_ID = "obadx/muaalem-model-v3_2"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def load_tiny_model():
-    processor = AutoFeatureExtractor.from_pretrained(MODEL_ID)
+def _get_base_config(model_id):
+    from conformer_python.muaalem_offline import (
+        Wav2Vec2BertForMultilevelCTCConfig,
+    )
+
+    return Wav2Vec2BertForMultilevelCTCConfig.from_pretrained(model_id)
+
+
+def load_conformer_model(model_id):
+    from conformer_python.muaalem_offline import (
+        Wav2Vec2BertForMultilevelCTC,
+        Wav2Vec2BertForMultilevelCTCConfig,
+    )
+
+    processor = AutoFeatureExtractor.from_pretrained(model_id)
     config = Wav2Vec2BertForMultilevelCTCConfig.from_pretrained(
-        MODEL_ID,
+        model_id,
         pad_token_id=vocab.PAD_TOKEN_IDX,
         attention_dropout=0.0,
         hidden_dropout=0.0,
@@ -35,35 +43,86 @@ def load_tiny_model():
         layerdrop=0.0,
         ctc_loss_reduction="mean",
         add_adapter=False,
-        num_hidden_layers=16,
-        hidden_size=144,
-        output_hidden_size=144,
-        intermediate_size=256,
-        num_attention_heads=4,
+        num_hidden_layers=12,
+        hidden_size=512,
+        output_hidden_size=512,
+        intermediate_size=2048,
+        num_attention_heads=12,
         adapter_stride=1,
     )
     model = Wav2Vec2BertForMultilevelCTC.from_pretrained(
-        MODEL_ID,
+        model_id,
         config=config,
         ignore_mismatched_sizes=True,
     )
     model.eval()
-    return model, processor
+    return model, processor, "input_features"
 
 
-class TinyMuaalemWrapper(torch.nn.Module):
-    def __init__(self, model):
+def create_w2v_model(model_id):
+    from conformer_python.muaalem_offline_w2v import (
+        Wav2Vec2ForMultilevelCTC,
+        Wav2Vec2ForMultilevelCTCConfig,
+    )
+
+    base_config = _get_base_config(model_id)
+    config = Wav2Vec2ForMultilevelCTCConfig(
+        level_to_vocab_size=base_config.level_to_vocab_size,
+        level_to_loss_weight=base_config.level_to_loss_weight,
+        pad_token_id=vocab.PAD_TOKEN_IDX,
+        hidden_size=384,
+        num_hidden_layers=24,
+        num_attention_heads=4,
+        intermediate_size=1536,
+        attention_dropout=0.0,
+        hidden_dropout=0.0,
+        feat_proj_dropout=0.0,
+        mask_time_prob=0.0,
+        layerdrop=0.0,
+        ctc_loss_reduction="mean",
+        add_adapter=False,
+    )
+    model = Wav2Vec2ForMultilevelCTC(config)
+    model.eval()
+    return model, None, "input_values"
+
+
+def _make_sample(arch_key, model, processor):
+    if arch_key == "w2v-conformer":
+        dummy_input = processor(
+            int(16000 * 0.7) * [0], sampling_rate=16000, return_tensors="pt"
+        )
+        return (dummy_input["input_features"].float(),)
+    else:
+        return (torch.zeros(1, int(16000 * 0.7)).float(),)
+
+
+class MuaalemWrapper(torch.nn.Module):
+    def __init__(self, model, input_key):
         super().__init__()
         self.model = model
+        self.input_key = input_key
         self.level_names = list(model.level_to_lm_head.keys())
 
-    def forward(self, input_features):
-        out = self.model(input_features, return_dict=True)
+    def forward(self, x):
+        kwargs = {self.input_key: x, "return_dict": True}
+        out = self.model(**kwargs)
         return tuple(out["logits"][name] for name in self.level_names)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Convert tiny Muaalem to TFLite")
+    parser.add_argument(
+        "--architecture",
+        choices=["w2v-conformer", "w2v"],
+        default="w2v-conformer",
+        help="Model architecture (default: w2v-conformer)",
+    )
+    parser.add_argument(
+        "--model-id",
+        default="obadx/muaalem-model-v3_2",
+        help="HuggingFace model ID (default: obadx/muaalem-model-v3_2)",
+    )
     parser.add_argument(
         "--output-dir",
         default=SCRIPT_DIR,
@@ -72,16 +131,20 @@ def main():
     args = parser.parse_args()
     os.makedirs(args.output_dir, exist_ok=True)
 
-    f32_path = os.path.join(args.output_dir, "tiny_muaalem_float32.tflite")
-    int8_path = os.path.join(args.output_dir, "tiny_muaalem_int8.tflite")
-    int4_path = os.path.join(args.output_dir, "tiny_muaalem_int4.tflite")
+    arch = args.architecture
+    prefix = "tiny_muaalem" if arch == "w2v-conformer" else "tiny_muaalem_w2v"
+    f32_path = os.path.join(args.output_dir, f"{prefix}_float32.tflite")
+    int8_path = os.path.join(args.output_dir, f"{prefix}_int8.tflite")
+    int4_path = os.path.join(args.output_dir, f"{prefix}_int4.tflite")
 
-    print("Loading model...")
-    model, processor = load_tiny_model()
-    wrapped = TinyMuaalemWrapper(model).eval().float()
+    print(f"Loading {arch} model...")
+    if arch == "w2v-conformer":
+        model, processor, input_key = load_conformer_model(args.model_id)
+    else:
+        model, processor, input_key = create_w2v_model(args.model_id)
 
-    dummy_input = processor(16000 * [0], sampling_rate=16000, return_tensors="pt")
-    sample = (dummy_input["input_features"].float(),)
+    wrapped = MuaalemWrapper(model, input_key).eval().float()
+    sample = _make_sample(arch, model, processor)
 
     # 1. float32
     print("[1/3] Converting float32...")

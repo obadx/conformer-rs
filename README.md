@@ -82,6 +82,27 @@ This project includes a pre-configured Conformer model for ASR using ConformerBl
 
 ---
 
+## LiteRT (TFLite) Benchmark on Smartphone
+
+Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [LiteRT](https://ai.google.dev/edge/litert)) and run on **Redmi 9 (MediaTek Helio G80)** with 700ms input speech.
+
+| Architecture | #Params | Layers | hidden_size | ffn_size | Quantization | Size | Time ± std (ms) | Notes |
+|---|---|---|---|---|---|---|---|---|
+| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | int4 | 86 MB | 507.40 ± 3.47 | |
+| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | int8 | 160 MB | — | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | float32 | 628 MB | 1160.88 ± 180.65 | |
+| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | int4 | 42 MB | 240.88 ± 0.35 | |
+| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | int8 | 73 MB | — | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | float32 | 282 MB | 481.78 ± 187.13 | |
+| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | int4 | 26 MB | 146.23 ± 0.25 | |
+| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | int8 | 43 MB | — | not tested |
+| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | float32 | 161 MB | 239.30 ± 0.42 | |
+| wav2vec2 | 48.2M | 24 | 384 | 1536 | int4 | 26 MB | 337.64 ± 0.57 | |
+| wav2vec2 | 48.2M | 24 | 384 | 1536 | int8 | 48 MB | 291.83 ± 0.88 | |
+| wav2vec2 | 48.2M | 24 | 384 | 1536 | float32 | 185 MB | 797.12 ± 212.95 | |
+
+---
+
 # Muaalem: Tiny Arabic ASR Model
 
 Muaalem uses ConformerBlock as the building block for its encoder. This section documents exporting to ONNX and benchmarking.
