@@ -84,7 +84,7 @@ This project includes a pre-configured Conformer model for ASR using ConformerBl
 
 ## LiteRT (TFLite) Benchmark on Smartphone
 
-Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [LiteRT](https://ai.google.dev/edge/litert)) and run on **Redmi 9 (MediaTek Helio G80)** with 700ms input speech.
+Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [LiteRT](https://ai.google.dev/edge/litert)) and run on the CPU of **Redmi 9 (MediaTek Helio G80)** with 700ms input speech.
 
 | Architecture | #Params | Layers | hidden_size | ffn_size | Quantization | Size | Time ± std (ms) | Notes |
 |---|---|---|---|---|---|---|---|---|
