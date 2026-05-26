@@ -87,10 +87,46 @@ def create_w2v_model(model_id):
     return model, None, "input_values"
 
 
+def create_whisper_enc_model(model_id):
+    from conformer_python.muaalem_offline_whisper_enc import (
+        WhisperEncoderForMultilevelCTC,
+        WhisperEncoderForMultilevelCTCConfig,
+    )
+
+    base_config = _get_base_config(model_id)
+    config = WhisperEncoderForMultilevelCTCConfig(
+        level_to_vocab_size=base_config.level_to_vocab_size,
+        level_to_loss_weight=base_config.level_to_loss_weight,
+        pad_token_id=vocab.PAD_TOKEN_IDX,
+        d_model=768,
+        encoder_layers=12,
+        encoder_attention_heads=12,
+        encoder_ffn_dim=3072,
+        max_source_positions=35,
+        dropout=0.0,
+        attention_dropout=0.0,
+        activation_dropout=0.0,
+        ctc_loss_reduction="mean",
+        encoder_layerdrop=0.0,
+    )
+    model = WhisperEncoderForMultilevelCTC(config)
+    model.eval()
+    processor = AutoFeatureExtractor.from_pretrained("openai/whisper-small")
+    return model, processor, "input_features"
+
+
 def _make_sample(arch_key, model, processor):
     if arch_key == "w2v-conformer":
         dummy_input = processor(
             int(16000 * 0.7) * [0], sampling_rate=16000, return_tensors="pt"
+        )
+        return (dummy_input["input_features"].float(),)
+    elif arch_key == "whisper-enc":
+        dummy_input = processor(
+            int(16000 * 0.7) * [0],
+            sampling_rate=16000,
+            return_tensors="pt",
+            padding=False,
         )
         return (dummy_input["input_features"].float(),)
     else:
@@ -114,7 +150,7 @@ def main():
     parser = argparse.ArgumentParser(description="Convert tiny Muaalem to TFLite")
     parser.add_argument(
         "--architecture",
-        choices=["w2v-conformer", "w2v"],
+        choices=["w2v-conformer", "w2v", "whisper-enc"],
         default="w2v-conformer",
         help="Model architecture (default: w2v-conformer)",
     )
@@ -132,7 +168,13 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     arch = args.architecture
-    prefix = "tiny_muaalem" if arch == "w2v-conformer" else "tiny_muaalem_w2v"
+    prefix = (
+        "tiny_muaalem"
+        if arch == "w2v-conformer"
+        else "tiny_muaalem_w2v"
+        if arch == "w2v"
+        else "tiny_muaalem_whisper_enc"
+    )
     f32_path = os.path.join(args.output_dir, f"{prefix}_float32.tflite")
     int8_path = os.path.join(args.output_dir, f"{prefix}_int8.tflite")
     int4_path = os.path.join(args.output_dir, f"{prefix}_int4.tflite")
@@ -140,6 +182,8 @@ def main():
     print(f"Loading {arch} model...")
     if arch == "w2v-conformer":
         model, processor, input_key = load_conformer_model(args.model_id)
+    elif arch == "whisper-enc":
+        model, processor, input_key = create_whisper_enc_model(args.model_id)
     else:
         model, processor, input_key = create_w2v_model(args.model_id)
 
