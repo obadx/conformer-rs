@@ -128,7 +128,7 @@ adb push tiny_muaalem_int8.tflite /data/local/tmp/
 
 ### Step 2: Download LiteRT Benchmark Tool
 
-Get the `benchmark_model` binary from LiteRT nightly binaries:
+Get the `benchmark_model` binary from [LiteRT nightly binaries](https://ai.google.dev/edge/litert/next/benchmark):
 
 ```bash
 wget https://storage.googleapis.com/litert/binaries/latest/android_arm64/benchmark_model
