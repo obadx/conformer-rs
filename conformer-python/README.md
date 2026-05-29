@@ -128,18 +128,18 @@ adb push tiny_muaalem_int8.tflite /data/local/tmp/
 
 ### Step 2: Download LiteRT Benchmark Tool
 
-Get the `benchmark_model` binary from TensorFlow Lite releases (works with LiteRT `.tflite` files):
+Get the `benchmark_model` binary from LiteRT nightly binaries:
 
 ```bash
-wget https://storage.googleapis.com/tensorflow-nightly-public/prod/tensorflow/release/lite/tools/nightly/latest/android_aarch64_benchmark_model
-chmod +x android_aarch64_benchmark_model
-adb push android_aarch64_benchmark_model /data/local/tmp/
+wget https://storage.googleapis.com/litert/binaries/latest/android_arm64/benchmark_model
+chmod +x benchmark_model
+adb push benchmark_model /data/local/tmp/
 ```
 
 ### Step 3: Run CPU Benchmark
 
 ```bash
-adb shell /data/local/tmp/android_aarch64_benchmark_model \
+adb shell /data/local/tmp/benchmark_model \
   --graph=/data/local/tmp/tiny_muaalem_float32.tflite \
   --num_runs=100 \
   --warmup_runs=5
@@ -148,7 +148,7 @@ adb shell /data/local/tmp/android_aarch64_benchmark_model \
 ### Step 4: Run with NNAPI (Deprecated but functional)
 
 ```bash
-adb shell /data/local/tmp/android_aarch64_benchmark_model \
+adb shell /data/local/tmp/benchmark_model \
   --graph=/data/local/tmp/tiny_muaalem_float32.tflite \
   --num_runs=100 \
   --warmup_runs=5 \
