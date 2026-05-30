@@ -112,7 +112,6 @@ Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [Lit
 | whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | int4 | 45 MB | | 267.86 ± 84.02 | | | | |
 | whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | int8 | 88.5 MB | | 303.13 ± 183.35 | | | | |
 | whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | float32 | 348 MB | | 571.26 ± 142.71 | | | | |
-
 ---
 
 # Muaalem: Tiny Arabic ASR Model
