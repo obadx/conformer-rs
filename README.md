@@ -94,6 +94,9 @@ Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [Lit
 | wav2vec2-conformer | 97.0M | 16 | 512 | 2048 | 9 | int4 | 56.66 MB | 113.04 MB | 312.45 ± 0.86 | 199.95 ± 2.93 | 132.59 ± 2.76 | 179.00 ± 7.31 | |
 | wav2vec2-conformer | 97.0M | 16 | 512 | 2048 | 9 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
 | wav2vec2-conformer | 97.0M | 16 | 512 | 2048 | 9 | float32 | 393.06 MB | 758.46 MB | 727.93 ± 276.09 | 322.28 ± 9.43 | 242.67 ± 3.79 | 220.50 ± 14.91 | |
+| wav2vec2-conformer | 97.1M | 16 | 512 | 2048 | 31 | int4 | 57.38 MB | 114.31 MB | 331.17 ± 0.90 | 211.99 ± 2.92 | 143.35 ± 3.67 | 185.85 ± 9.18 | |
+| wav2vec2-conformer | 97.1M | 16 | 512 | 2048 | 31 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 97.1M | 16 | 512 | 2048 | 31 | float32 | 393.78 MB | 759.41 MB | 646.68 ± 145.51 | 350.27 ± 83.49 | 237.86 ± 3.10 | 168.57 ± 8.26 | |
 | wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | 31 | int4 | 86 MB | | 507.40 ± 3.47 | | | | |
 | wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | 31 | int8 | 160 MB | | — | | | | ❌ batch_matmul mixed precision |
 | wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | 31 | float32 | 628 MB | | 1160.88 ± 180.65 | | | | |
