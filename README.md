@@ -86,23 +86,32 @@ This project includes a pre-configured Conformer model for ASR using ConformerBl
 
 Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [LiteRT](https://ai.google.dev/edge/litert)) and run on the CPU of **Redmi 9 (MediaTek Helio G80)** with 700ms input speech.
 
-| Architecture | #Params | Layers | hidden_size | ffn_size | Quantization | Size | Time ± std (ms) | Notes |
-|---|---|---|---|---|---|---|---|---|
-| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | int4 | 86 MB | 507.40 ± 3.47 | |
-| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | int8 | 160 MB | — | ❌ batch_matmul mixed precision |
-| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | float32 | 628 MB | 1160.88 ± 180.65 | |
-| whisper-encoder-small | 87.1M | 12 | 768 | 3072 | int4 | 45 MB | 267.86 ± 84.02 | |
-| whisper-encoder-small | 87.1M | 12 | 768 | 3072 | int8 | 88.5 MB | 303.13 ± 183.35 | |
-| whisper-encoder-small | 87.1M | 12 | 768 | 3072 | float32 | 348 MB | 571.26 ± 142.71 | |
-| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | int4 | 42 MB | 240.88 ± 0.35 | |
-| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | int8 | 73 MB | — | ❌ batch_matmul mixed precision |
-| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | float32 | 282 MB | 481.78 ± 187.13 | |
-| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | int4 | 26 MB | 146.23 ± 0.25 | |
-| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | int8 | 43 MB | — | not tested |
-| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | float32 | 161 MB | 239.30 ± 0.42 | |
-| wav2vec2 | 48.2M | 24 | 384 | 1536 | int4 | 26 MB | 337.64 ± 0.57 | |
-| wav2vec2 | 48.2M | 24 | 384 | 1536 | int8 | 48 MB | 291.83 ± 0.88 | |
-| wav2vec2 | 48.2M | 24 | 384 | 1536 | float32 | 185 MB | 797.12 ± 212.95 | |
+| Architecture | #Params | Layers | hidden_size | ffn_size | conv_kernel | Quantization | Size | Memory usage | 1 thread | 2 threads | 4 threads | 8 threads | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | int4 | 117.98 MB | 225.04 MB | 746.99 ± 206.54 | 441.31 ± 179.56 | 307.10 ± 177.84 | 202.60 ± 4.86 | |
+| wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | float32 | 875.79 MB | 1412.41 MB | 1450.37 ± 199.24 | 833.07 ± 180.13 | 684.53 ± 216.75 | 621.79 ± 80.54 | |
+| wav2vec2-conformer | 97.0M | 16 | 512 | 2048 | 9 | int4 | 56.66 MB | 113.04 MB | 312.45 ± 0.86 | 199.95 ± 2.93 | 132.59 ± 2.76 | 179.00 ± 7.31 | |
+| wav2vec2-conformer | 97.0M | 16 | 512 | 2048 | 9 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 97.0M | 16 | 512 | 2048 | 9 | float32 | 393.06 MB | 758.46 MB | 727.93 ± 276.09 | 322.28 ± 9.43 | 242.67 ± 3.79 | 220.50 ± 14.91 | |
+| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | 31 | int4 | 86 MB | | 507.40 ± 3.47 | | | | |
+| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | 31 | int8 | 160 MB | | — | | | | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 163.6M | 12 | 768 | 3072 | 31 | float32 | 628 MB | | 1160.88 ± 180.65 | | | | |
+| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | 31 | int4 | 42 MB | | 240.88 ± 0.35 | | | | |
+| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | 31 | int8 | 73 MB | | — | | | | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 72.9M | 12 | 512 | 2048 | 31 | float32 | 282 MB | | 481.78 ± 187.13 | | | | |
+| wav2vec2-conformer | 72.7M | 12 | 512 | 2048 | 9 | int4 | 42.52 MB | 86.73 MB | 260.12 ± 88.30 | 149.34 ± 3.27 | 94.71 ± 2.31 | 102.84 ± 5.44 | |
+| wav2vec2-conformer | 72.7M | 12 | 512 | 2048 | 9 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
+| wav2vec2-conformer | 72.7M | 12 | 512 | 2048 | 9 | float32 | 294.92 MB | 568.08 MB | 460.54 ± 112.05 | 265.45 ± 94.92 | 170.95 ± 0.94 | 118.54 ± 1.07 | |
+| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | 31 | int4 | 26 MB | | 146.23 ± 0.25 | | | | |
+| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | 31 | int8 | 43 MB | | — | | | | not tested |
+| wav2vec2-conformer | 41.1M | 12 | 384 | 1536 | 31 | float32 | 161 MB | | 239.30 ± 0.42 | | | | |
+| wav2vec2 | 48.2M | 24 | 384 | 1536 | | int4 | 26 MB | | 337.64 ± 0.57 | | | | |
+| wav2vec2 | 48.2M | 24 | 384 | 1536 | | int8 | 48 MB | | 291.83 ± 0.88 | | | | |
+| wav2vec2 | 48.2M | 24 | 384 | 1536 | | float32 | 185 MB | | 797.12 ± 212.95 | | | | |
+| whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | int4 | 45 MB | | 267.86 ± 84.02 | | | | |
+| whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | int8 | 88.5 MB | | 303.13 ± 183.35 | | | | |
+| whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | float32 | 348 MB | | 571.26 ± 142.71 | | | | |
 
 ---
 
