@@ -87,7 +87,7 @@ This project includes a pre-configured Conformer model for ASR using ConformerBl
 Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [LiteRT](https://ai.google.dev/edge/litert)) and run on the CPU of **Redmi 9 (MediaTek Helio G80)** with 700ms input speech.
 
 | Architecture | #Params | Layers | hidden_size | ffn_size | conv_kernel | Quantization | Size | Memory usage | 1 thread | 2 threads | 4 threads | 8 threads | Notes |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | int4 | 117.98 MB | 225.04 MB | 746.99 ± 206.54 | 441.31 ± 179.56 | 307.10 ± 177.84 | 202.60 ± 4.86 | |
 | wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
 | wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | float32 | 875.79 MB | 1412.41 MB | 1450.37 ± 199.24 | 833.07 ± 180.13 | 684.53 ± 216.75 | 621.79 ± 80.54 | |
@@ -112,6 +112,7 @@ Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [Lit
 | whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | int4 | 45 MB | | 267.86 ± 84.02 | | | | |
 | whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | int8 | 88.5 MB | | 303.13 ± 183.35 | | | | |
 | whisper-encoder-small | 87.1M | 12 | 768 | 3072 | | float32 | 348 MB | | 571.26 ± 142.71 | | | | |
+
 ---
 
 # Muaalem: Tiny Arabic ASR Model
