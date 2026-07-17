@@ -88,6 +88,8 @@ Benchmark of wav2vec2-conformer and wav2vec2 models exported to TFLite (via [Lit
 
 | Architecture | #Params | Layers | hidden_size | ffn_size | conv_kernel | Quantization | Size | Memory usage | 1 thread | 2 threads | 4 threads | 8 threads | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| w2v-conformer-rnn-streaming | 97.3M | 16 | 512 | 2048 | 7 | int4 | 58.21 MB | 115.12 MB | 389.39 ± 164.69 | 221.22 ± 99.56 | 174.99 ± 81.12 | 141.47 ± 78.34 | streaming |
+| w2v-conformer-rnn-streaming | 97.3M | 16 | 512 | 2048 | 7 | float32 | 395.80 MB | 764.27 MB | 693.40 ± 174.10 | 355.83 ± 140.63 | 286.35 ± 120.38 | 204.76 ± 118.04 | streaming |
 | wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | int4 | 117.98 MB | 225.04 MB | 746.99 ± 206.54 | 441.31 ± 179.56 | 307.10 ± 177.84 | 202.60 ± 4.86 | |
 | wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | int8 | — | | — | | | | ❌ batch_matmul mixed precision |
 | wav2vec2-conformer | 217.7M | 16 | 768 | 3072 | 9 | float32 | 875.79 MB | 1412.41 MB | 1450.37 ± 199.24 | 833.07 ± 180.13 | 684.53 ± 216.75 | 621.79 ± 80.54 | |
